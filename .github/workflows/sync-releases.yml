@@ -1,0 +1,56 @@
+name: Sync signed Connector releases
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-connector-release-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Test verification and publication safeguards
+        run: python -m unittest discover -s tests -v
+      - name: Verify the live signed publication without write credentials
+        if: github.event_name != 'pull_request'
+        run: python scripts/sync_releases.py
+
+  publish:
+    needs: verify
+    if: >-
+      github.repository == 'deskfleet/connector' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Verify again and synchronize the public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLIC_TOOLING_COMMIT: ${{ github.sha }}
+        run: python scripts/sync_releases.py --publish --target-commit "$PUBLIC_TOOLING_COMMIT"
