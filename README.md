@@ -16,7 +16,7 @@ GitHub's automatically generated source archives contain only this public releas
 
 ## How the index stays current
 
-The existing Deskfleet release pipeline builds and signs the packages. This repository checks its [public signed feed](https://updates.deskfleet.dev/latest.json) automatically twice an hour, and supports a manual workflow run. GitHub may delay scheduled runs; synchronization is not instantaneous.
+The existing Deskfleet release pipeline builds and signs the packages. This repository checks its [public signed feed](https://updates.deskfleet.dev/latest.json) automatically once daily at 04:37 UTC (12:37 China Standard Time), and supports a manual workflow run. GitHub may delay scheduled runs; synchronization is not instantaneous.
 
 Before publishing, the synchronizer verifies the detached OpenSSH signature against pinned public keys, manifest validity, exact version and commit download URLs, package sizes, SHA-256 checksums and every archived file's hash. It never installs or executes a downloaded package. Existing public release history prevents rollback or reuse of a release identity. Version 55 is the initial trusted baseline; this index does not reconstruct older releases from private GitHub records.
 
